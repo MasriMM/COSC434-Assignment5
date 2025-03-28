@@ -8,10 +8,44 @@ use App\Models\Student;
 class StudentController extends Controller
 {
     // Display a list of students
-    public function index()
+    public function index(Request $request)
     {
-        $students = Student::all(); // Later: add filtering logic
-        return view('index', compact('students'));
+        if ($request->ajax()) {
+            $query = trim($request->input('search'));
+            $minAge = $request->input('minAge');
+            $maxAge = $request->input('maxAge');
+
+            $students = Student::query();
+
+            // Apply the search filter
+            if (!empty($query)) {
+                $students->where('name', 'LIKE', "%{$query}%");
+            }
+
+            // Apply the age range filter
+            if (!empty($minAge) && !empty($maxAge)) {
+                $students->whereBetween('age', [$minAge, $maxAge]);
+            }
+
+            return response()->json($students->get(), 200);
+        }
+    
+        // For regular requests (non-AJAX), return the view
+        $students = Student::query();
+        
+        if ($request->has('search')) {
+            $query = trim($request->input('search'));
+            $students->where('name', 'LIKE', "%{$query}%");
+        }
+
+        if ($request->has('minAge') && $request->has('maxAge')) {
+            $minAge = $request->input('minAge');
+            $maxAge = $request->input('maxAge');
+            $students->whereBetween('age', [$minAge, $maxAge]);
+        }
+
+        return view('index', ['students' => $students->get()]);
+    
     }
 
     // Show the form to create a new student
@@ -33,11 +67,34 @@ class StudentController extends Controller
             'age'  => $request->age,
         ]);
 
-        return redirect()->route('index')->with('success', 'Student added successfully!');
+        return redirect()->route('students.index');
     }
 
-    public function show($id) {}
-    public function edit($id) {}
-    public function update(Request $request, $id) {}
-    public function destroy($id) {}
+    public function show($id) {
+        $student = Student::findOrFail($id);
+        return view('show', compact('student'));
+    }
+    public function edit($id) {
+        $student = Student::findOrFail($id);
+        return view('edit', compact('student'));
+
+    }
+    public function update(Request $request, $id) {
+        $request->validate([
+            'name' => 'required',
+            'age' => 'required',
+        ]);
+        $student = Student::findOrFail($id);
+        $student->update([
+            'name' => $request->name,
+            'age' => $request->age,
+        ]);
+        return redirect()->route('students.index');
+
+    }
+    public function destroy($id) {
+        $student = Student::findOrFail($id);
+        $student->delete();
+        return redirect()->route('students.index');
+    }
 }
