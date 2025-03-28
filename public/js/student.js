@@ -20,7 +20,6 @@ $(document).ready(function() {
                     response.forEach(function(student) {
                         studentList += 
                             `<tr>
-                                <td>${student.id}</td>
                                 <td>${student.name}</td>
                                 <td>${student.age}</td>
                                 <td>
