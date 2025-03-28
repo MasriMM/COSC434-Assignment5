@@ -24,13 +24,9 @@ $(document).ready(function() {
                                 <td>${student.name}</td>
                                 <td>${student.age}</td>
                                 <td>
-                                    <a href="{{route('students.show', $student->id)}}" class="btn btn-success btn-sm">Show</a>
-                                    <a href="{{route('students.edit', $student->id)}}" class="btn btn-warning btn-sm">Edit</a>
-                                    <form action="{{route('students.destroy', $student->id)}}" method="POST">
-                                        @csrf
-                                        @method('Delete')
-                                        <button type="submit" class="btn btn-danger btn-sm mt-2">Delete</button>
-                                    </form>
+                                    <a href="/students/${student.id}" class="btn btn-success btn-sm">Show</a>
+                                    <a href="/students/${student.id}/edit" class="btn btn-warning btn-sm">Edit</a>
+                                    <button class="btn btn-danger btn-sm delete-btn" data-id="${student.id}">Delete</button>
                                 </td>
                             </tr>`;
                     });
@@ -43,5 +39,24 @@ $(document).ready(function() {
                 console.log("Error fetching students:", xhr.responseText); // Debugging Log
             }
         });
+    });
+
+    $(document).on('click', '.delete-btn', function() {
+        let studentId = $(this).data('id');
+            $.ajax({
+                url: `/students/${studentId}`,
+                method: 'POST',
+                data: {
+                    _method: 'DELETE',
+                    _token: $('meta[name="csrf-token"]').attr('content')
+                },
+                success: function(response) {
+                    location.reload(); 
+                },
+                error: function(xhr, status, error) {
+                    console.log("Error deleting student:", xhr.responseText);
+                }
+            });
+        
     });
 });
